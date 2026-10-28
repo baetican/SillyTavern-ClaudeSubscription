@@ -104,29 +104,55 @@
 
     // ── Per-request injection (CHAT_COMPLETION_SETTINGS_READY) ──
 
-    function buildIncludeBodyYaml(settings) {
-        const lines = ['claude_subscription:'];
-        if (settings.effort !== 'auto') lines.push(`  effort: ${settings.effort}`);
-        lines.push(`  thinking: ${settings.thinking}`);
-        lines.push(`  show_reasoning: ${settings.showReasoning}`);
-        lines.push(`  identity_mode: ${settings.identityMode}`);
-        lines.push(`  use_resume: ${settings.useResume}`);
-        return lines.join('\n');
+    // The listener requires a per-install proxy key on chat requests. It is
+    // read from the same-origin ST plugin route (behind ST's own login) and
+    // kept in memory only — never written to extension settings.
+    let proxyKey = null;
+
+    async function fetchProxyKey() {
+        if (proxyKey) return proxyKey;
+        try {
+            const res = await fetch('/api/plugins/claude-subscription/proxy-key', { signal: AbortSignal.timeout(8000) });
+            if (!res.ok) return null; // older server plugin without the route
+            const data = await res.json();
+            proxyKey = typeof data.key === 'string' && data.key ? data.key : null;
+        } catch (err) {
+            console.warn('[claude-max] could not fetch proxy key', err);
+        }
+        return proxyKey;
     }
 
-    function onSettingsReady(data) {
+    function buildIncludeBodyYaml(settings, key) {
+        const lines = ['claude_subscription:'];
+        if (key) lines.push(`  proxy_key: ${JSON.stringify(key)}`);
+        if (settings.enabled) {
+            if (settings.effort !== 'auto') lines.push(`  effort: ${settings.effort}`);
+            lines.push(`  thinking: ${settings.thinking}`);
+            lines.push(`  show_reasoning: ${settings.showReasoning}`);
+            lines.push(`  identity_mode: ${settings.identityMode}`);
+            lines.push(`  use_resume: ${settings.useResume}`);
+        }
+        return lines.length > 1 ? lines.join('\n') : '';
+    }
+
+    async function onSettingsReady(data) {
         try {
             const settings = getSettings();
-            if (!settings.enabled) return;
             if (!data || data.chat_completion_source !== 'custom') return;
             if (!isOurEndpoint(data.custom_url, settings)) return;
+
+            // The key is injected even when "Enabled" is off — that toggle
+            // only governs the Claude settings, not access to the proxy.
+            const key = await fetchProxyKey();
+            const block = buildIncludeBodyYaml(settings, key);
+            if (!block) return;
 
             const existing = typeof data.custom_include_body === 'string' ? data.custom_include_body : '';
             const cleaned = existing
                 .replace(/^claude_subscription:[\s\S]*?(?=^\S|\s*$(?![\s\S]))/m, '')
                 .replace(/\n{3,}/g, '\n\n')
                 .trim();
-            data.custom_include_body = (cleaned ? cleaned + '\n' : '') + buildIncludeBodyYaml(settings);
+            data.custom_include_body = (cleaned ? cleaned + '\n' : '') + block;
         } catch (err) {
             console.error('[claude-max] failed to inject settings', err);
         }
@@ -379,5 +405,6 @@
     const settings = getSettings();
     addExtensionSettings(settings);
     eventSource.on(eventTypes.CHAT_COMPLETION_SETTINGS_READY, onSettingsReady);
+    fetchProxyKey();
     console.log('[claude-max] UI extension loaded');
 })();

@@ -14,9 +14,13 @@ settings.
 
 ## What v2 gives you
 
-- **Current models** — Claude Fable 5.1/5, Opus 5/4.8/4.7/4.6/4.5, Sonnet 4.6/4.5,
-  Haiku 4.5, plus explicit **"(1M context)"** variants for the tiers that
-  support extended context.
+- **Live model list** — the picker is pulled from Anthropic's Models API with
+  your subscription login (refreshed hourly), so new Claude models show up
+  without a plugin update. Each model's real capabilities decide the details:
+  "(1M context)" variants appear for models with a 1M window, unsupported
+  thinking modes fall back to adaptive, and unsupported effort levels are
+  clamped to the nearest one. A built-in list is used if the API is
+  unreachable.
 - **One-click connect** — the Claude Max panel (Extensions drawer) configures
   SillyTavern's Custom endpoint for you. No URLs to paste.
 - **Claude-native reasoning effort** — `low / medium / high / xhigh / max`,
@@ -138,6 +142,10 @@ no reconnect needed.
 | `CLAUDE_SUBSCRIPTION_MAX_TURNS` | `1` | SDK maxTurns |
 | `CLAUDE_SUBSCRIPTION_CLAUDE_PATH` | – | Explicit `claude` executable path |
 | `CLAUDE_SUBSCRIPTION_NO_UI_INSTALL` | – | `1` skips UI-extension auto-install |
+| `CLAUDE_SUBSCRIPTION_STATIC_MODELS` | – | `1` uses the built-in model list instead of the live API |
+| `CLAUDE_SUBSCRIPTION_KEY` | – | Proxy key to require (default: generated into `.proxy-key`) |
+| `CLAUDE_SUBSCRIPTION_ALLOWED_HOSTS` | – | Extra `Host` names the listener accepts (comma-separated) |
+| `CLAUDE_SUBSCRIPTION_NO_AUTH` | – | `1` disables the proxy-key check (Host check still applies) |
 
 > Changing the port or host? Update **Endpoint (advanced)** in the Claude Max
 > panel to the new `http://<host>:<port>/v1` before clicking **Connect** —
@@ -151,11 +159,13 @@ no reconnect needed.
 | GET | `http://127.0.0.1:8901/status` | SDK + credential health |
 | GET | `http://127.0.0.1:8901/v1/models` | Model list (incl. 1M variants) |
 | GET | `http://127.0.0.1:8901/v1/usage/quota` | Subscription window utilization |
-| POST | `http://127.0.0.1:8901/v1/chat/completions` | Chat (SSE + JSON) |
+| POST | `http://127.0.0.1:8901/v1/chat/completions` | Chat (SSE + JSON) — requires the proxy key |
 | POST | `http://127.0.0.1:8901/v1/embeddings` | Always `501` |
 | GET | `http://<sillytavern>/api/plugins/claude-subscription/status` | Browser health check |
 
-Direct API users: the plugin accepts the standard `reasoning_effort` body
+Direct API users: send the key from the plugin's `.proxy-key` file as
+`Authorization: Bearer <key>` (the Claude Max panel supplies it
+automatically for SillyTavern). The plugin accepts the standard `reasoning_effort` body
 field, or a `claude_subscription: { effort, thinking, thinking_budget,
 show_reasoning, identity_mode, use_resume }` object for full control.
 `thinking_budget` (tokens) only applies when `thinking: "on"` and the model

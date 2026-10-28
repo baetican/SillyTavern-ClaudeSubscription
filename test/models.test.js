@@ -12,11 +12,14 @@ import {
     listModelsHandler,
 } from '../lib/models.js';
 
+// Tests never hit the network: the live catalog is injected explicitly.
+process.env.CLAUDE_SUBSCRIPTION_STATIC_MODELS = '1';
+
 test('CANONICAL_TIER_MODELS pins flagship models for each tier', () => {
     assert.equal(CANONICAL_TIER_MODELS.fable, 'claude-fable-5-1');
-    assert.equal(CANONICAL_TIER_MODELS.opus, 'claude-opus-5');
-    assert.equal(CANONICAL_TIER_MODELS.sonnet, 'claude-sonnet-4-6');
-    assert.equal(CANONICAL_TIER_MODELS.haiku, 'claude-haiku-4-5');
+    assert.equal(CANONICAL_TIER_MODELS.opus, 'claude-opus-5-5');
+    assert.equal(CANONICAL_TIER_MODELS.sonnet, 'claude-sonnet-5-5');
+    assert.equal(CANONICAL_TIER_MODELS.haiku, 'claude-haiku-5-5');
 });
 
 test('CLAUDE_SUBSCRIPTION_MODELS contains Claude Fable 5.1 and Claude Opus 5', () => {
@@ -43,7 +46,7 @@ test('CLAUDE_SUBSCRIPTION_MODELS contains Claude Fable 5.1 and Claude Opus 5', (
     assert.ok(CLAUDE_SUBSCRIPTION_MODELS.find((m) => m.id === 'claude-opus-4-6'));
 });
 
-test('listModelsHandler exposes base and 1M variants for Fable 5.1 and Opus 5', () => {
+test('listModelsHandler exposes base and 1M variants for Fable 5.1 and Opus 5', async () => {
     let responseData = null;
     const mockRes = {
         json(payload) {
@@ -51,7 +54,7 @@ test('listModelsHandler exposes base and 1M variants for Fable 5.1 and Opus 5', 
         },
     };
 
-    listModelsHandler({}, mockRes);
+    await listModelsHandler({}, mockRes);
     assert.ok(responseData && Array.isArray(responseData.data));
 
     const ids = responseData.data.map((m) => m.id);
@@ -77,7 +80,7 @@ test('parseModelRequest correctly handles base and 1M requests for Claude Fable 
     assert.equal(base.sdkModel, 'claude-fable-5-1');
     assert.equal(base.adaptiveOnly, true);
     assert.equal(base.envPins.ANTHROPIC_DEFAULT_FABLE_MODEL, 'claude-fable-5-1');
-    assert.equal(base.envPins.ANTHROPIC_DEFAULT_OPUS_MODEL, 'claude-opus-5');
+    assert.equal(base.envPins.ANTHROPIC_DEFAULT_OPUS_MODEL, 'claude-opus-5-5');
 
     const oneM = parseModelRequest('claude-fable-5-1[1m]');
     assert.equal(oneM.baseId, 'claude-fable-5-1');
@@ -145,11 +148,11 @@ test('Package versions match across package.json and manifest.json', () => {
     const pkg = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf8'));
     const manifest = JSON.parse(readFileSync(join(here, '..', 'manifest.json'), 'utf8'));
 
-    assert.equal(pkg.version, '2.2.0');
-    assert.equal(manifest.version, '2.2.0');
+    assert.equal(pkg.version, '2.2.1');
+    assert.equal(manifest.version, '2.2.1');
 });
 
-test('handleStatus returns current version 2.2.0', async () => {
+test('handleStatus returns current version 2.2.1', async () => {
     const { handleStatus } = await import('../lib/status.js');
     let responseData = null;
     const mockRes = {
@@ -166,6 +169,6 @@ test('handleStatus returns current version 2.2.0', async () => {
     };
     await handleStatus({}, mockRes);
     assert.ok(responseData);
-    assert.equal(responseData.version, '2.2.0');
+    assert.equal(responseData.version, '2.2.1');
     assert.equal(responseData.plugin, 'claude-subscription');
 });

@@ -31,6 +31,8 @@ import { fileURLToPath } from 'node:url';
 
 import { handleStatus } from './lib/status.js';
 import { handleQuota } from './lib/oauth.js';
+import { getProxyKey, handleProxyKey } from './lib/auth.js';
+import { refreshModelCatalog } from './lib/model-catalog.js';
 import { startStandaloneListener, stopStandaloneListener } from './lib/listener.js';
 
 const DEFAULT_PORT = 8901;
@@ -128,11 +130,16 @@ export async function init(router) {
     // health checks, /quota so the UI extension can read quota SAME-ORIGIN —
     // a direct browser fetch to 127.0.0.1:8901 resolves to the CLIENT device
     // and fails whenever SillyTavern is browsed from a phone/another PC.
+    // /proxy-key hands the listener's key to the extension; it lives here,
+    // behind SillyTavern's own login/whitelist, never on the listener.
     router.use(express.json({ limit: '50mb' }));
     router.get('/status', handleStatus);
     router.get('/quota', handleQuota);
+    router.get('/proxy-key', handleProxyKey);
 
     installUiExtension();
+    getProxyKey(); // mint on startup so the key file exists for direct API users
+    refreshModelCatalog().catch(() => {}); // warm the live model list
 
     const port = parseInt(process.env.CLAUDE_SUBSCRIPTION_PORT, 10) || DEFAULT_PORT;
     const host = process.env.CLAUDE_SUBSCRIPTION_HOST || DEFAULT_HOST;
