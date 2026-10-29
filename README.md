@@ -51,6 +51,12 @@ settings.
 - **Privacy sweep** — the transcript the Claude CLI writes for each live turn
   is deleted after the request; your roleplay does not persist in plaintext
   under `~/.claude/projects`.
+- **No account email in prompts** — Claude Code normally injects your
+  claude.ai email into every request. The plugin runs the CLI against a
+  private config dir (`.claude-config/` in the plugin folder) with the
+  subscription token passed in the environment, so the email, your
+  `~/.claude` memory and plugins never reach the roleplay. The plugin
+  refreshes the token itself; `~/.claude/.credentials.json` stays the source.
 
 ## Prerequisites
 
@@ -146,6 +152,7 @@ no reconnect needed.
 | `CLAUDE_SUBSCRIPTION_KEY` | – | Proxy key to require (default: generated into `.proxy-key`) |
 | `CLAUDE_SUBSCRIPTION_ALLOWED_HOSTS` | – | Extra `Host` names the listener accepts (comma-separated) |
 | `CLAUDE_SUBSCRIPTION_NO_AUTH` | – | `1` disables the proxy-key check (Host check still applies) |
+| `CLAUDE_SUBSCRIPTION_ISOLATE_CONFIG` | `1` | `0` runs the CLI against your normal `~/.claude` config (re-enables the email context block) |
 
 > Changing the port or host? Update **Endpoint (advanced)** in the Claude Max
 > panel to the new `http://<host>:<port>/v1` before clicking **Connect** —
