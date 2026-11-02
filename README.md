@@ -48,6 +48,10 @@ settings.
   mid-roleplay.
 - **Quota meter** — live 5-hour / 7-day subscription window utilization in
   the panel, so a long session never hits a surprise lockout.
+- **Preset-faithful prompt placement** — post-history instructions,
+  Author's Note and depth injections stay where your preset puts them
+  instead of being hoisted into the system prompt, matching ST's direct
+  Claude API mapping and keeping prompt caching effective.
 - **Privacy sweep** — the transcript the Claude CLI writes for each live turn
   is deleted after the request; your roleplay does not persist in plaintext
   under `~/.claude/projects`.
@@ -126,6 +130,13 @@ no reconnect needed.
 | Show reasoning | On | **Display only** — doesn't change whether thinking happens. On: the thinking summary streams into ST's collapsible "thoughts" box (enable "Show model thoughts" in ST too). Never added to chat history or re-sent as context. |
 | Identity mode | Off | Off: your character card is the *entire* system prompt. On: prepends Anthropic's Claude Code preamble (the framing the `claude` CLI uses) — fixes model self-identification ("are you Opus or Sonnet?") at the cost of extra tokens and a coding-assistant flavor. Leave off for RP. |
 | Session resume | On | How history reaches Claude. On: replayed as a real multi-turn session — better turn awareness, working prompt caching (faster + less quota burned re-reading context); swipes/edits handled naturally. Off: history flattened to one `User:/Assistant:` text block (troubleshooting only). |
+| System messages after chat start | Keep in place | Claude has no system role mid-conversation. **Keep in place**: only prompts above Chat History form the system prompt; later system prompts (post-history instructions, Author's Note, World Info at depth, extension injections) become user text where the preset put them — ST's own mapping for the direct Claude API, and much better prompt caching when those change every turn. **Move all**: the pre-2.3 behaviour, every system prompt hoisted above the whole chat. |
+
+> **Changed in 2.3:** system prompts placed after Chat History used to be
+> moved into the system prompt; they now stay in position. If a preset
+> reads differently, try **Move all** in the panel. ST's "Prompt
+> Post-Processing → Semi-strict" produces the same result and is safe to
+> leave on.
 
 ### Known limitations (Agent SDK)
 

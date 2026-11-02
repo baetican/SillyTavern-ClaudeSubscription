@@ -46,6 +46,7 @@
 
     const VALID_EFFORTS = ['auto', 'low', 'medium', 'high', 'xhigh', 'max'];
     const VALID_THINKING = ['adaptive', 'on', 'off'];
+    const VALID_PLACEMENTS = ['leading', 'all'];
 
     const defaultSettings = {
         enabled: true,
@@ -55,6 +56,7 @@
         showReasoning: true,
         identityMode: false,
         useResume: true,
+        systemPlacement: 'leading',
     };
 
     function getSettings() {
@@ -122,7 +124,10 @@
         return proxyKey;
     }
 
-    function buildIncludeBodyYaml(settings, key) {
+    // `names` carries user/char/group names from the generate data — ST
+    // doesn't forward them to Custom endpoints, and the plugin needs them
+    // to prefix dialogue examples the way ST's Claude converter does.
+    function buildIncludeBodyYaml(settings, key, names = {}) {
         const lines = ['claude_subscription:'];
         if (key) lines.push(`  proxy_key: ${JSON.stringify(key)}`);
         if (settings.enabled) {
@@ -131,6 +136,10 @@
             lines.push(`  show_reasoning: ${settings.showReasoning}`);
             lines.push(`  identity_mode: ${settings.identityMode}`);
             lines.push(`  use_resume: ${settings.useResume}`);
+            lines.push(`  system_placement: ${settings.systemPlacement}`);
+            if (names.userName) lines.push(`  user_name: ${JSON.stringify(names.userName)}`);
+            if (names.charName) lines.push(`  char_name: ${JSON.stringify(names.charName)}`);
+            if (names.groupNames?.length) lines.push(`  group_names: ${JSON.stringify(names.groupNames)}`);
         }
         return lines.length > 1 ? lines.join('\n') : '';
     }
@@ -144,7 +153,11 @@
             // The key is injected even when "Enabled" is off — that toggle
             // only governs the Claude settings, not access to the proxy.
             const key = await fetchProxyKey();
-            const block = buildIncludeBodyYaml(settings, key);
+            const block = buildIncludeBodyYaml(settings, key, {
+                userName: typeof data.user_name === 'string' ? data.user_name : '',
+                charName: typeof data.char_name === 'string' ? data.char_name : '',
+                groupNames: Array.isArray(data.group_names) ? data.group_names.filter((n) => typeof n === 'string') : [],
+            });
             if (!block) return;
 
             const existing = typeof data.custom_include_body === 'string' ? data.custom_include_body : '';
@@ -376,6 +389,20 @@
             're-reading old context). Swipes and edits are handled naturally since history is rebuilt every ' +
             'message. OFF: the whole chat is flattened into one "User:… / Assistant:…" text block — works, but ' +
             'weaker turn awareness and no caching. Turn off only when troubleshooting.',
+        ));
+
+        const [placementLabel, placementSelect] = makeSelectRow(
+            'System messages after chat start', 'claudeMaxPlacement', VALID_PLACEMENTS, settings.systemPlacement,
+            (v) => { settings.systemPlacement = VALID_PLACEMENTS.includes(v) ? v : 'leading'; saveSettingsDebounced(); },
+            { leading: 'Keep in place (like ST\'s Claude source — recommended)', all: 'Move all into the system prompt (pre-2.3)' },
+        );
+        content.append(placementLabel, placementSelect);
+        content.append(makeHelp(
+            'Claude has no system role mid-conversation. Keep in place: only the prompts above Chat History ' +
+            'form the system prompt; later system prompts (post-history instructions, Author\'s Note, World Info ' +
+            'at depth, extension injections) become user text where your preset put them — the same mapping ' +
+            'SillyTavern uses for the direct Claude API, and better for prompt caching. Move all: the old ' +
+            'behaviour, which hoists every system prompt above the whole chat.',
         ));
 
         const quotaHeader = document.createElement('div');
