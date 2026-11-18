@@ -7,10 +7,16 @@ mechanism VS Code, Cursor, and Zed use — and ships with a companion
 **"Claude Max" UI extension** for one-click connection and Claude-native
 settings.
 
+> This is the actively maintained fork of
+> [LukaTheHero/SillyTavern-ClaudeSubscription][original], which hasn't been
+> updated since v2.2.0. Installed from the original repo? See
+> [Updating](#updating) to switch over.
+
 <img width="954" height="1736" alt="Screenshot 2026-07-01 195136" src="https://github.com/user-attachments/assets/34199be7-9d69-402e-ac98-8589ab40c955" />
 
 
 [sdk]: https://docs.anthropic.com/en/docs/claude-code/sdk
+[original]: https://github.com/LukaTheHero/SillyTavern-ClaudeSubscription
 
 ## What v2 gives you
 
@@ -83,7 +89,7 @@ On the same machine SillyTavern runs on:
 From your SillyTavern install directory (the one containing `server.js`):
 
 ```
-node plugins.js install https://github.com/LukaTheHero/SillyTavern-ClaudeSubscription
+node plugins.js install https://github.com/baetican/SillyTavern-ClaudeSubscription
 cd plugins/SillyTavern-ClaudeSubscription
 npm install
 ```
@@ -100,6 +106,26 @@ Restart SillyTavern. The server log should show:
 > automatically on startup. Hard-refresh the browser (Ctrl+F5) after the
 > first install so SillyTavern loads it. Opt out with
 > `CLAUDE_SUBSCRIPTION_NO_UI_INSTALL=1`.
+
+### Updating
+
+With `enableServerPluginsAutoUpdate: true` in `config.yaml` (the default),
+SillyTavern pulls new releases each time it starts — just restart it, then
+hard-refresh the browser so the updated panel loads. Updates only run
+`git pull`; if a release notes new dependencies, also run `npm install` in
+`plugins/SillyTavern-ClaudeSubscription`.
+
+Installed from the original repo? Point your copy at this fork once, from
+`plugins/SillyTavern-ClaudeSubscription`:
+
+```
+git remote set-url origin https://github.com/baetican/SillyTavern-ClaudeSubscription
+git pull
+```
+
+This fork continues the original's history, so the pull fast-forwards.
+`git pull` complaining that a branch "was not fetched"? Your copy is on a
+branch that no longer exists — `git switch main`, then `git pull`.
 
 ### Alternative: install the panel via the extension dialog
 
