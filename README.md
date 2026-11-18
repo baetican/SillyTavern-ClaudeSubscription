@@ -147,6 +147,14 @@ no reconnect needed.
   Reply With", continue) becomes a continuation instruction rather than true
   Messages-API prefill. Works well in practice; the model occasionally
   paraphrases instead of continuing verbatim.
+- **Claude Code adds a short environment note to every request** (as a
+  system message after your first message). It holds the plugin's scratch
+  folder path, whether it's a git repo, the platform, shell and OS version,
+  a generic note on handling downloaded files, the model's name and today's
+  date. The CLI only skips it in bare mode, which doesn't accept
+  subscription logins, so it can't be turned off here. Your account email
+  is not in it, but the folder path shows where SillyTavern is installed,
+  including your user name if it lives under your home folder.
 - Embeddings return `501` — use a separate embedding source.
 
 ## Environment overrides
