@@ -57,6 +57,7 @@
         identityMode: false,
         useResume: true,
         systemPlacement: 'leading',
+        webSearch: false,
     };
 
     function getSettings() {
@@ -137,6 +138,7 @@
             lines.push(`  identity_mode: ${settings.identityMode}`);
             lines.push(`  use_resume: ${settings.useResume}`);
             lines.push(`  system_placement: ${settings.systemPlacement}`);
+            lines.push(`  web_search: ${settings.webSearch === true}`);
             if (names.userName) lines.push(`  user_name: ${JSON.stringify(names.userName)}`);
             if (names.charName) lines.push(`  char_name: ${JSON.stringify(names.charName)}`);
             if (names.groupNames?.length) lines.push(`  group_names: ${JSON.stringify(names.groupNames)}`);
@@ -365,6 +367,17 @@
             'streams into SillyTavern\'s collapsible "thoughts" box above the reply (also enable "Show model ' +
             'thoughts" in ST\'s user settings to see it). OFF: thinking stays hidden. Either way it is never ' +
             'added to chat history or re-sent as context.',
+        ));
+
+        content.append(makeCheckboxRow('Web search (Claude searches when it needs to)', 'claudeMaxWebSearch', settings.webSearch, (v) => {
+            settings.webSearch = v; saveSettingsDebounced();
+        }));
+        content.append(makeHelp(
+            'ON: Claude can search the web while replying — ask your character to look something up, or let it ' +
+            'check current facts on its own. Uses Claude\'s built-in search, so no other extension or search ' +
+            'service is needed. Each search pauses the reply for a few seconds (with Show reasoning on, the ' +
+            'thoughts box says what it is searching for) and uses more of your quota. Off by default: Claude ' +
+            'then works only from your chat, card and world info.',
         ));
 
         content.append(makeCheckboxRow('Identity mode (Claude Code preamble)', 'claudeMaxIdentity', settings.identityMode, (v) => {

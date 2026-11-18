@@ -37,6 +37,9 @@ settings.
 - **Roleplay isolation** — no coding system prompt, no host CLAUDE.md /
   settings / MCP connectors leaking into your scenes, no agent tools. Your
   character card and world info are the entire system prompt.
+- **Optional web search** — one checkbox lets Claude search the web while
+  replying ("Aria, look up who won last night's game"), using Claude's
+  built-in search. No extra extension or search service needed.
 - **Stop sequences enforced** — the Agent SDK has none, so the plugin scans
   the stream server-side (`\n{{user}}:` guards work as expected).
 - **Resilience** — automatic OAuth token refresh, rate-limit retries,
@@ -128,6 +131,7 @@ no reconnect needed.
 | Reasoning effort | Auto | How hard Claude reasons before replying, `low → max`. Auto sends nothing (model default, ≈high). Higher = better consistency on complex scenes, slower replies, more quota. |
 | Thinking mode | Adaptive | Whether extended thinking happens at all. **Adaptive**: model thinks only when the message warrants it. **Always on**: every reply. **Off**: none — except Fable 5/5.1 and Opus 4.7+ / Opus 5 *always* think (can't be disabled), and thinking is auto-disabled on other models when Max response length < 2048 tokens. |
 | Show reasoning | On | **Display only** — doesn't change whether thinking happens. On: the thinking summary streams into ST's collapsible "thoughts" box (enable "Show model thoughts" in ST too). Never added to chat history or re-sent as context. |
+| Web search | Off | On: Claude can search the web while replying, through Claude Code's built-in WebSearch tool (no SillyTavern extension or search backend needed). Each search pauses the reply a few seconds and uses extra quota; with Show reasoning on, the thoughts box shows what it's searching for. Up to four searches per message. |
 | Identity mode | Off | Off: your character card is the *entire* system prompt. On: prepends Anthropic's Claude Code preamble (the framing the `claude` CLI uses) — fixes model self-identification ("are you Opus or Sonnet?") at the cost of extra tokens and a coding-assistant flavor. Leave off for RP. |
 | Session resume | On | How history reaches Claude. On: replayed as a real multi-turn session — better turn awareness, working prompt caching (faster + less quota burned re-reading context); swipes/edits handled naturally. Off: history flattened to one `User:/Assistant:` text block (troubleshooting only). |
 | System messages after chat start | Keep in place | Claude has no system role mid-conversation. **Keep in place**: only prompts above Chat History form the system prompt; later system prompts (post-history instructions, Author's Note, World Info at depth, extension injections) become user text where the preset put them — ST's own mapping for the direct Claude API, and much better prompt caching when those change every turn. **Move all**: the pre-2.3 behaviour, every system prompt hoisted above the whole chat. |
@@ -165,6 +169,7 @@ no reconnect needed.
 | `CLAUDE_SUBSCRIPTION_HOST` | `127.0.0.1` | Listener host |
 | `CLAUDE_SUBSCRIPTION_USE_RESUME` | `1` | `0` forces the fold path |
 | `CLAUDE_SUBSCRIPTION_MAX_TURNS` | `1` | SDK maxTurns |
+| `CLAUDE_SUBSCRIPTION_WEB_SEARCH_MAX_SEARCHES` | `4` | Web searches allowed per message when Web search is on; past it Claude is told to answer with what it found |
 | `CLAUDE_SUBSCRIPTION_CLAUDE_PATH` | – | Explicit `claude` executable path |
 | `CLAUDE_SUBSCRIPTION_NO_UI_INSTALL` | – | `1` skips UI-extension auto-install |
 | `CLAUDE_SUBSCRIPTION_STATIC_MODELS` | – | `1` uses the built-in model list instead of the live API |
